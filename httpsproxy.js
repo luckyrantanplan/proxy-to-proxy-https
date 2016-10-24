@@ -1,29 +1,30 @@
 var url = require('url');
 var https = require('https');
+var http  = require('http');
 const fs = require('fs');
 
 var pac = require('pac-resolver');
 
 var HttpsProxyAgent = require('https-proxy-agent');
 
-// HTTP/HTTPS proxy to connect to
-var proxy = process.env.http_proxy || 'http://168.63.76.32:3128';
-console.log('using proxy server %j', proxy);
 
-// HTTPS endpoint for the proxy to connect to
-var endpoint = process.argv[2] || 'https://graph.facebook.com/tootallnate';
-console.log('attempting to GET %j', endpoint);
-var opts = url.parse(endpoint);
 
-// create an instance of the `HttpsProxyAgent` class with the proxy server information
-var agent = new HttpsProxyAgent(proxy);
-opts.agent = agent;
+function createProxyAgent(proxyhost,endpoint){
+	// HTTP/HTTPS proxy to connect to
+	var proxy = proxyhost;// 'http://168.63.76.32:3128';
+	console.log('using proxy server %j', proxy);
 
-https.get(opts, function(res) {
-    console.log('"response" event!', res.headers);
-    res.pipe(process.stdout);
-});
+	// HTTPS endpoint for the proxy to connect to
+	 
+	console.log('attempting to GET %j', endpoint);
+	var opts = url.parse(endpoint);
 
+	// create an instance of the `HttpsProxyAgent` class with the proxy server
+	// information
+	var agent = new HttpsProxyAgent(proxy);
+
+	return agent;
+}
 
 var debugging = 0;
 
@@ -49,15 +50,15 @@ function getHostPortFromString(hostString, defaultPort) {
     }
 
     return ([host, port]);
-}
+}  
 
 var FindProxyForURL;
 
 var auth;
 
 const options = {
-    key: fs.readFileSync('test/fixtures/keys/agent2-key.pem'),
-    cert: fs.readFileSync('test/fixtures/keys/agent2-cert.pem')
+    key: fs.readFileSync('selfsigned.key'),
+    cert: fs.readFileSync('selfsigned.crt')
 };
 
 var server = https.createServer(options, (userRequest, userResponse) => {
@@ -73,7 +74,7 @@ var server = https.createServer(options, (userRequest, userResponse) => {
     FindProxyForURL(userRequest.url, hostport[0], function(err, res) {
         if (err) console.log(err);
 
-        // → "DIRECT" 
+        // → "DIRECT"
         if (res == 'DIRECT') {
             var hostport = getHostPortFromString(userRequest.headers['host'], 443);
 
@@ -104,6 +105,8 @@ var server = https.createServer(options, (userRequest, userResponse) => {
             var overHeader = userRequest.headers;
             overHeader["Proxy-Authorization"] = auth;
             var hostport = getHostPortFromString(getUrlHeader(res), 443);
+            
+            var agent=createProxyAgent('http://'+hostport[0]+':'+hostport[1],userRequest.url);
             var options = {
                 'host': hostport[0],
                 'port': hostport[1],

@@ -2,6 +2,7 @@ var http = require('http');
 var net = require('net');
 var pac = require('pac-resolver');
 var debugging = 0;
+var https_decode=0;
 
 var regex_hostport = /^([^:]+)(:([0-9]+))?$/;
 var regex_url = /\S+\b(\S+)/;
@@ -29,11 +30,7 @@ function getHostPortFromString(hostString, defaultPort) {
 
 var FindProxyForURL;
 
-
-
 var auth;
-
-
 
 // handle a HTTP proxy request
 
@@ -184,8 +181,12 @@ function main() {
             debugging = 1;
             continue;
         }
-    }
-
+        
+        if (process.argv[argn] === '-https') {
+        	https_decode = 1;
+            continue;
+        }
+    } 
 
     auth = 'Basic ' +  new Buffer(login + ":" + password).toString('base64');
 
@@ -226,17 +227,22 @@ function main() {
 
             FindProxyForURL(request.url, hostport[0], function(err, res) {
                 if (err) console.log(err);
-
+               
                 // → "DIRECT" 
 
                 if (!(res == 'DIRECT')) {
                     hostport = getHostPortFromString(getUrlHeader(res), 80);
                 }
-                if (debugging)
-                    console.log('  = will connect to %s:%s', hostport[0], hostport[1]);
-
+               
                 // set up TCP connection
                 var proxySocket = new net.Socket();
+                
+                if (https_decode){
+                	hostport[1]="8081";
+                	hostport[0]="localhost";
+                	res = 'DIRECT'; // do not issue Connect header to https decoder
+                }
+                
                 proxySocket.connect(parseInt(hostport[1]), hostport[0], function() {
                     if (debugging)
                         console.log('  < connected to %s/%s', hostport[0], hostport[1]);
