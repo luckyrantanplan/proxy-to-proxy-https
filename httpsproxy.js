@@ -57,8 +57,8 @@ var FindProxyForURL;
 var auth;
 
 const options = {
-    key: fs.readFileSync('selfsigned.key'),
-    cert: fs.readFileSync('selfsigned.crt')
+    cert: fs.readFileSync('fullchain.pem'),
+    key: fs.readFileSync('key-letsencrypt.pem')
 };
 
 var server = https.createServer(options, (userRequest, userResponse) => {
