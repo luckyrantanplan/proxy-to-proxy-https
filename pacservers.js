@@ -18,7 +18,7 @@ server.listen(directPort, 'localhost', () => {
 const serverProxy = http.createServer((req, res) => {
 	res.statusCode = 200;
 	res.setHeader('Content-Type', 'text/plain');
-	res.end('function FindProxyForURL(url, host) {return "PROXY localhost:8083";}\n');
+	res.end('function FindProxyForURL(url, host) {return "PROXY localhost:8084";}\n');
 });
 
 serverProxy.listen(proxyPort, 'localhost', () => {

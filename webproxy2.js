@@ -34,7 +34,9 @@ function getHostPortFromString(hostString, defaultPort) {
 
 var FindProxyForURL;
 
+var authText;
 var auth;
+
 
 // handle a HTTP proxy request
 
@@ -52,8 +54,7 @@ function httpUserRequest(userRequest, userResponse) {
 
 		// → "DIRECT"
 		if (res == 'DIRECT') {
-			var hostport = getHostPortFromString(userRequest.headers['host'],
-					80);
+			var hostport = getHostPortFromString(userRequest.headers['host'],80);
 
 			// have to extract the path from the requested URL
 			var path = userRequest.url;
@@ -203,7 +204,9 @@ function main() {
 		}
 	}
 
-	auth = 'Basic ' + new Buffer(login + ":" + password).toString('base64');
+	authText=login + ":" + password;
+	
+	auth = 'Basic ' + new Buffer(authText).toString('base64');
 
 	var request = http.get(urlProxyPac, function(response) {
 
