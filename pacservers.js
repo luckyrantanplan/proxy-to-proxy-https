@@ -10,7 +10,7 @@ const server = http.createServer((req, res) => {
 	res.end('function FindProxyForURL(url, host) {return "DIRECT"; }\n');
 });
 
-server.listen(directPort, '127.0.0.1', () => {
+server.listen(directPort, 'localhost', () => {
 	console.log('Server direct running at '+directPort);
 });
 
@@ -18,10 +18,10 @@ server.listen(directPort, '127.0.0.1', () => {
 const serverProxy = http.createServer((req, res) => {
 	res.statusCode = 200;
 	res.setHeader('Content-Type', 'text/plain');
-	res.end('function FindProxyForURL(url, host) {return "PROXY localhost:8083";}\n');
+	res.end('function FindProxyForURL(url, host) {return "PROXY localhost:8084";}\n');
 });
 
-serverProxy.listen(proxyPort, '192.168.1.15', () => {
+serverProxy.listen(proxyPort, 'localhost', () => {
 	console.log('Server proxy running at '+proxyPort);
 });
 

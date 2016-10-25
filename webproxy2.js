@@ -1,4 +1,5 @@
 var http = require('http');
+var https = require('https');
 var net = require('net');
 var pac = require('pac-resolver');
 var url = require('url');
@@ -52,6 +53,7 @@ function getHostPortFromString(hostString, defaultPort) {
 
 var FindProxyForURL;
 
+var authText;
 var auth;
 
 const
