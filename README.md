@@ -1,6 +1,10 @@
 # proxy-to-proxy-https
 An http proxy that act as man in the middle between a browser and a corporate proxy in nodeJS node node.js
 
+Do not hesitate to publish an issue for any question or problem
+
+(inspired by https://newspaint.wordpress.com/2012/11/05/node-js-http-and-https-proxy/ )
+
 ##usage : 
 
 -l : login for corporate http proxy authentification
