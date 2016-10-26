@@ -56,9 +56,22 @@ var auth;
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
+function printHeaderRequestHttp(userRequest) {
+	var httpVersion = userRequest['httpVersion'];
+	console.log(userRequest.method + ' ' + userRequest['url'] + " HTTP/" + httpVersion + "\r\n");
+	console.log(JSON.stringify(userRequest.headers, null, 4));
+}
+
+function printHeaderResponsetHttp(response) {
+	var httpVersion = response['httpVersion'];
+	console.log("HTTP/" + httpVersion + ' ' + response['statusCode'] + ' ' + response['statusMessage'] + "\r\n");
+	console.log(JSON.stringify(response.headers, null, 4));
+}
+
 function https_request(userRequest, userResponse) {
 
-	var httpVersion = userRequest['httpVersion'];
+	printHeaderRequestHttp(userRequest);
+
 	var hostport = getHostPortFromString(userRequest.headers['host'], 443);
 
 	FindProxyForURL(userRequest.url, hostport[0], function(err, res) {
@@ -111,7 +124,7 @@ function https_request(userRequest, userResponse) {
 		}
 
 		var proxyRequest = https.request(options, function(proxyResponse) {
-
+			printHeaderResponsetHttp(proxyResponse);
 			userResponse.writeHead(proxyResponse.statusCode, proxyResponse.headers);
 
 			proxyResponse.on('data', function(chunk) {
@@ -153,7 +166,7 @@ var https_decode = 0;
 // handle a HTTP proxy request
 function httpUserRequest(userRequest, userResponse) {
 
-	var httpVersion = userRequest['httpVersion'];
+	printHeaderRequestHttp(userRequest);
 	var hostport = getHostPortFromString(userRequest.headers['host'], 80);
 
 	FindProxyForURL(userRequest.url, hostport[0], function(err, res) {
@@ -199,7 +212,7 @@ function httpUserRequest(userRequest, userResponse) {
 		}
 
 		var proxyRequest = http.request(options, function(proxyResponse) {
-
+			printHeaderResponsetHttp(proxyResponse);
 			userResponse.writeHead(proxyResponse.statusCode, proxyResponse.headers);
 
 			proxyResponse.on('data', function(chunk) {
