@@ -110,6 +110,9 @@ function https_request(userRequest, userResponse) {
 
 			var agent = createProxyAgent('http://' + hostport[0] + ':'
 					+ hostport[1], userRequest.url);
+			
+			var hostport = getHostPortFromString(userRequest.headers['host'], 443);
+			
 			var options = {
 				'host' : hostport[0],
 				'port' : hostport[1],
