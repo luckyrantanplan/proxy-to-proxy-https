@@ -1,5 +1,5 @@
 # proxy-to-proxy-https
-An http proxy that act as man in the middle between a browser and a corporate proxy in nodeJS node node.js
+An http proxy that acts as man in the middle between a browser and a corporate proxy in nodeJS node node.js
 
 Do not hesitate to publish an issue for any question or problem
 
