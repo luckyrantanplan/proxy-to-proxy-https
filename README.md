@@ -16,10 +16,6 @@ Do not hesitate to publish an issue for any question or problem
 * -certKey : key for re encoding message to external proxy or website
 
 
-```sh
-$ cd dillinger
-$ npm install -d
-$ node app
-```
+
 ```sh
 $nodejs webproxy2.js -p 8084 -l myLogin -pass myPassword -P http://localhost:8082 -d -https -cert fullchain.pem -certKey key-letsencrypt.pem 
