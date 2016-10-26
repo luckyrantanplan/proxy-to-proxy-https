@@ -1,5 +1,5 @@
 # proxy-to-proxy-https
-An http proxy that acts as man in the middle between a browser and a corporate proxy in nodeJS node node.js
+An http proxy that acts as man in the middle between a browser and a corporate proxy in nodeJS 
 
 Do not hesitate to publish an issue for any question or problem
 
@@ -84,4 +84,14 @@ HTTP/1.1 200 OK
 [...]
 ```
 
-You can notice "proxy-authorization" header that is present. As the connection to the target url is now 'DIRECT', This  "proxy-authorization" header is removed before the sending to the endpoint.
+You can notice that "proxy-authorization" header is now present. Since the connection to the target url is now 'DIRECT', the "proxy-authorization" header is removed before the sending to the endpoint.
+
+###example of client script
+
+```sh
+export https_proxy=http://localhost:8080
+export http_proxy=http://localhost:8080
+
+wget http://www.20minutes.fr
+wget https://www.leboncoin.fr --no-check-certificate -d
+```
