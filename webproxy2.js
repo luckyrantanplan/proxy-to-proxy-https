@@ -12,11 +12,9 @@ var HttpsProxyAgent = require('https-proxy-agent');
 function createProxyAgent(proxyhost, endpoint) {
 	// HTTP/HTTPS proxy to connect to
 	var proxy = proxyhost;// 'http://168.63.76.32:3128';
-	console.log('using proxy server %j', proxy);
 
 	// HTTPS endpoint for the proxy to connect to
 
-	console.log('attempting to GET %j', endpoint);
 	var opts = url.parse(endpoint);
 
 	// create an instance of the `HttpsProxyAgent` class with the proxy server
@@ -59,10 +57,6 @@ var auth;
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
 function https_request(userRequest, userResponse) {
-
-	if (debugging) {
-		console.log('  > request: %s', userRequest.url);
-	}
 
 	var httpVersion = userRequest['httpVersion'];
 	var hostport = getHostPortFromString(userRequest.headers['host'], 443);
@@ -115,24 +109,14 @@ function https_request(userRequest, userResponse) {
 			    headers : overHeader
 			};
 		}
-		if (debugging) {
-			console.log('  > options: %s', JSON.stringify(options, null, 2));
-		}
 
 		var proxyRequest = https.request(options, function(proxyResponse) {
-			if (debugging) {
-				console.log('  > request headers: %s', JSON.stringify(options['headers'], null, 2));
-			}
-
-			if (debugging) {
-				console.log('  < response %d headers: %s', proxyResponse.statusCode, JSON.stringify(proxyResponse.headers, null, 2));
-			}
 
 			userResponse.writeHead(proxyResponse.statusCode, proxyResponse.headers);
 
 			proxyResponse.on('data', function(chunk) {
 				if (debugging) {
-					console.log('  < chunk = %d bytes', chunk.length);
+					console.log('  < ' + chunk);
 				}
 				userResponse.write(chunk);
 			});
@@ -153,7 +137,7 @@ function https_request(userRequest, userResponse) {
 
 		userRequest.on('data', function(chunk) {
 			if (debugging) {
-				console.log('  > chunk = %d bytes', chunk.length);
+				console.log('  > ' + chunk);
 			}
 			proxyRequest.write(chunk);
 		});
@@ -168,9 +152,6 @@ var https_decode = 0;
 
 // handle a HTTP proxy request
 function httpUserRequest(userRequest, userResponse) {
-	if (debugging) {
-		console.log('  > request: %s', userRequest.url);
-	}
 
 	var httpVersion = userRequest['httpVersion'];
 	var hostport = getHostPortFromString(userRequest.headers['host'], 80);
@@ -216,24 +197,14 @@ function httpUserRequest(userRequest, userResponse) {
 			    headers : overHeader
 			};
 		}
-		if (debugging) {
-			console.log('  > options: %s', JSON.stringify(options, null, 2));
-		}
 
 		var proxyRequest = http.request(options, function(proxyResponse) {
-			if (debugging) {
-				console.log('  > request headers: %s', JSON.stringify(options['headers'], null, 2));
-			}
-
-			if (debugging) {
-				console.log('  < response %d headers: %s', proxyResponse.statusCode, JSON.stringify(proxyResponse.headers, null, 2));
-			}
 
 			userResponse.writeHead(proxyResponse.statusCode, proxyResponse.headers);
 
 			proxyResponse.on('data', function(chunk) {
 				if (debugging) {
-					console.log('  < chunk = %d bytes', chunk.length);
+					console.log('  < ' + chunk);
 				}
 				userResponse.write(chunk);
 			});
@@ -254,7 +225,7 @@ function httpUserRequest(userRequest, userResponse) {
 
 		userRequest.on('data', function(chunk) {
 			if (debugging) {
-				console.log('  > chunk = %d bytes', chunk.length);
+				console.log('  > ' + chunk);
 			}
 			proxyRequest.write(chunk);
 		});
@@ -339,9 +310,7 @@ function main() {
 		response.on('end', function() {
 			FindProxyForURL = pac("" + allresponse);
 			console.log("FindProxyForURL OK for " + urlProxyPac);
-			if (debugging) {
-				console.log('webproxy server listening on port ' + (port + 1));
-			}
+
 			options_certificat = {
 			    key : fs.readFileSync(certificatKey),
 			    cert : fs.readFileSync(certificat)
@@ -419,25 +388,21 @@ function main() {
 
 			proxySocket.on('data', function(chunk) {
 				socketRequest.write(chunk);
-				if (debugging)
-					console.log('  < data length = %d', chunk.length);
+
 			});
 
 			proxySocket.on('end', function() {
 				socketRequest.end();
-				if (debugging)
-					console.log('  < end');
+
 			});
 
 			socketRequest.on('data', function(chunk) {
 				proxySocket.write(chunk);
-				if (debugging)
-					console.log('  > data length = %d', chunk.length);
+
 			});
 
 			socketRequest.on('end', function() {
-				if (debugging)
-					console.log('  > end');
+
 				proxySocket.end();
 			});
 
