@@ -56,6 +56,8 @@ var FindProxyForURL;
 var authText;
 var auth;
 
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+
 function https_request(userRequest, userResponse) {
 
 	if (debugging) {
@@ -99,9 +101,9 @@ function https_request(userRequest, userResponse) {
 
 			var overHeader = userRequest.headers;
 			overHeader["Proxy-Authorization"] = auth;
-			var hostport = getHostPortFromString(getUrlHeader(res), 443);
+			var proxyHostport = getHostPortFromString(getUrlHeader(res), 443);
 
-			var agent = createProxyAgent('http://' + hostport[0] + ':' + hostport[1], userRequest.url);
+			var agent = createProxyAgent('http://' + proxyHostport[0] + ':' + proxyHostport[1], userRequest.url);
 
 			var hostport = getHostPortFromString(userRequest.headers['host'], 443);
 
