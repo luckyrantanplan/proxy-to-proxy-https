@@ -56,12 +56,6 @@ var FindProxyForURL;
 var authText;
 var auth;
 
-const
-options = {
-	key : fs.readFileSync('selfsigned.key'),
-	cert : fs.readFileSync('selfsigned.crt')
-};
-
 function https_request(userRequest, userResponse) {
 
 	if (debugging) {
@@ -77,8 +71,7 @@ function https_request(userRequest, userResponse) {
 
 		// → "DIRECT"
 		if (res == 'DIRECT') {
-			var hostport = getHostPortFromString(userRequest.headers['host'],
-					443);
+			var hostport = getHostPortFromString(userRequest.headers['host'], 443);
 
 			// have to extract the path from the requested URL
 			var path = userRequest.url;
@@ -93,13 +86,13 @@ function https_request(userRequest, userResponse) {
 			}
 			delete userRequest.headers["Proxy-Authorization"];
 			var options = {
-				'host' : hostport[0],
-				'port' : hostport[1],
-				'method' : userRequest.method,
-				'path' : path,
-				'agent' : userRequest.agent,
-				'auth' : userRequest.auth,
-				'headers' : userRequest.headers
+			    'host' : hostport[0],
+			    'port' : hostport[1],
+			    'method' : userRequest.method,
+			    'path' : path,
+			    'agent' : userRequest.agent,
+			    'auth' : userRequest.auth,
+			    'headers' : userRequest.headers
 
 			};
 		} else {
@@ -108,17 +101,16 @@ function https_request(userRequest, userResponse) {
 			overHeader["Proxy-Authorization"] = auth;
 			var hostport = getHostPortFromString(getUrlHeader(res), 443);
 
-			var agent = createProxyAgent('http://' + hostport[0] + ':'
-					+ hostport[1], userRequest.url);
-			
+			var agent = createProxyAgent('http://' + hostport[0] + ':' + hostport[1], userRequest.url);
+
 			var hostport = getHostPortFromString(userRequest.headers['host'], 443);
-			
+
 			var options = {
-				'host' : hostport[0],
-				'port' : hostport[1],
-				path : userRequest.url,
-				'agent' : agent,
-				headers : overHeader
+			    'host' : hostport[0],
+			    'port' : hostport[1],
+			    path : userRequest.url,
+			    'agent' : agent,
+			    headers : overHeader
 			};
 		}
 		if (debugging) {
@@ -127,18 +119,14 @@ function https_request(userRequest, userResponse) {
 
 		var proxyRequest = https.request(options, function(proxyResponse) {
 			if (debugging) {
-				console.log('  > request headers: %s', JSON.stringify(
-						options['headers'], null, 2));
+				console.log('  > request headers: %s', JSON.stringify(options['headers'], null, 2));
 			}
 
 			if (debugging) {
-				console.log('  < response %d headers: %s',
-						proxyResponse.statusCode, JSON.stringify(
-								proxyResponse.headers, null, 2));
+				console.log('  < response %d headers: %s', proxyResponse.statusCode, JSON.stringify(proxyResponse.headers, null, 2));
 			}
 
-			userResponse.writeHead(proxyResponse.statusCode,
-					proxyResponse.headers);
+			userResponse.writeHead(proxyResponse.statusCode, proxyResponse.headers);
 
 			proxyResponse.on('data', function(chunk) {
 				if (debugging) {
@@ -157,8 +145,7 @@ function https_request(userRequest, userResponse) {
 
 		proxyRequest.on('error', function(error) {
 			userResponse.writeHead(500);
-			userResponse.write("<h1>500 Error</h1>\r\n" + "<p>Error was <pre>"
-					+ error + "</pre></p>\r\n" + "</body></html>\r\n");
+			userResponse.write("<h1>500 Error</h1>\r\n" + "<p>Error was <pre>" + error + "</pre></p>\r\n" + "</body></html>\r\n");
 			userResponse.end();
 		});
 
@@ -190,10 +177,9 @@ function httpUserRequest(userRequest, userResponse) {
 		if (err)
 			console.log(err);
 
-		// → "DIRECT" 
+		// → "DIRECT"
 		if (res == 'DIRECT') {
-			var hostport = getHostPortFromString(userRequest.headers['host'],
-					80);
+			var hostport = getHostPortFromString(userRequest.headers['host'], 80);
 
 			// have to extract the path from the requested URL
 			var path = userRequest.url;
@@ -208,13 +194,13 @@ function httpUserRequest(userRequest, userResponse) {
 			}
 			delete userRequest.headers["Proxy-Authorization"];
 			var options = {
-				'host' : hostport[0],
-				'port' : hostport[1],
-				'method' : userRequest.method,
-				'path' : path,
-				'agent' : userRequest.agent,
-				'auth' : userRequest.auth,
-				'headers' : userRequest.headers
+			    'host' : hostport[0],
+			    'port' : hostport[1],
+			    'method' : userRequest.method,
+			    'path' : path,
+			    'agent' : userRequest.agent,
+			    'auth' : userRequest.auth,
+			    'headers' : userRequest.headers
 			};
 		} else {
 
@@ -222,10 +208,10 @@ function httpUserRequest(userRequest, userResponse) {
 			overHeader["Proxy-Authorization"] = auth;
 			var hostport = getHostPortFromString(getUrlHeader(res), 80);
 			var options = {
-				'host' : hostport[0],
-				'port' : hostport[1],
-				path : userRequest.url,
-				headers : overHeader
+			    'host' : hostport[0],
+			    'port' : hostport[1],
+			    path : userRequest.url,
+			    headers : overHeader
 			};
 		}
 		if (debugging) {
@@ -234,18 +220,14 @@ function httpUserRequest(userRequest, userResponse) {
 
 		var proxyRequest = http.request(options, function(proxyResponse) {
 			if (debugging) {
-				console.log('  > request headers: %s', JSON.stringify(
-						options['headers'], null, 2));
+				console.log('  > request headers: %s', JSON.stringify(options['headers'], null, 2));
 			}
 
 			if (debugging) {
-				console.log('  < response %d headers: %s',
-						proxyResponse.statusCode, JSON.stringify(
-								proxyResponse.headers, null, 2));
+				console.log('  < response %d headers: %s', proxyResponse.statusCode, JSON.stringify(proxyResponse.headers, null, 2));
 			}
 
-			userResponse.writeHead(proxyResponse.statusCode,
-					proxyResponse.headers);
+			userResponse.writeHead(proxyResponse.statusCode, proxyResponse.headers);
 
 			proxyResponse.on('data', function(chunk) {
 				if (debugging) {
@@ -264,8 +246,7 @@ function httpUserRequest(userRequest, userResponse) {
 
 		proxyRequest.on('error', function(error) {
 			userResponse.writeHead(500);
-			userResponse.write("<h1>500 Error</h1>\r\n" + "<p>Error was <pre>"
-					+ error + "</pre></p>\r\n" + "</body></html>\r\n");
+			userResponse.write("<h1>500 Error</h1>\r\n" + "<p>Error was <pre>" + error + "</pre></p>\r\n" + "</body></html>\r\n");
 			userResponse.end();
 		});
 
@@ -282,6 +263,8 @@ function httpUserRequest(userRequest, userResponse) {
 	});
 }
 
+var options_certificat;
+
 function main() {
 
 	var port = 5555; // default port if none on command line
@@ -290,6 +273,10 @@ function main() {
 	var urlProxyPac = "";
 	var password;
 	var login;
+
+	var certificatKey = "selfsigned.key";
+	var certificat = "selfsigned.crt";
+
 	for (var argn = 2; argn < process.argv.length; argn++) {
 		if (process.argv[argn] === '-p') {
 			port = parseInt(process.argv[argn + 1]);
@@ -311,6 +298,18 @@ function main() {
 
 		if (process.argv[argn] === '-pass') {
 			password = process.argv[argn + 1];
+			argn++;
+			continue;
+		}
+
+		if (process.argv[argn] === '-cert') {
+			certificat = process.argv[argn + 1];
+			argn++;
+			continue;
+		}
+
+		if (process.argv[argn] === '-certKey') {
+			certificatKey = process.argv[argn + 1];
 			argn++;
 			continue;
 		}
@@ -341,12 +340,16 @@ function main() {
 			if (debugging) {
 				console.log('webproxy server listening on port ' + (port + 1));
 			}
-			var httpsserver = https.createServer(options, https_request);
+			options_certificat = {
+			    key : fs.readFileSync(certificatKey),
+			    cert : fs.readFileSync(certificat)
+			};
+
+			var httpsserver = https.createServer(options_certificat, https_request);
 			// HTTPS connect listener
 			httpsserver.listen(port + 1);
 
-			console.log("TCP server accepting connection on port: "
-					+ (port + 1));
+			console.log("TCP server accepting connection on port: " + (port + 1));
 		});
 
 	});
@@ -369,7 +372,7 @@ function main() {
 			if (err)
 				console.log(err);
 
-			// → "DIRECT" 
+			// → "DIRECT"
 
 			if (!(res == 'DIRECT')) {
 				hostport = getHostPortFromString(getUrlHeader(res), 80);
@@ -386,24 +389,21 @@ function main() {
 
 			proxySocket.connect(parseInt(hostport[1]), hostport[0], function() {
 				if (debugging)
-					console.log('  < connected to %s/%s', hostport[0],
-							hostport[1]);
+					console.log('  < connected to %s/%s', hostport[0], hostport[1]);
 
 				if (debugging) {
-					console.log('  > writing head of length %d',
-							bodyhead.length);
+					console.log('  > writing head of length %d', bodyhead.length);
 				}
 
 				if (res == 'DIRECT') {
 
 					proxySocket.write(bodyhead);
 
-					// tell the caller the connection was successfully established
-					socketRequest.write("HTTP/" + httpVersion
-							+ " 200 Connection established\r\n\r\n");
+					// tell the caller the connection was successfully
+					// established
+					socketRequest.write("HTTP/" + httpVersion + " 200 Connection established\r\n\r\n");
 				} else {
-					var httpConnect = 'CONNECT ' + request['url'] + " HTTP/"
-							+ httpVersion + "\r\n";
+					var httpConnect = 'CONNECT ' + request['url'] + " HTTP/" + httpVersion + "\r\n";
 					for ( var h in request.headers) {
 						httpConnect += h + ': ' + request.headers[h] + "\r\n";
 					}
@@ -440,8 +440,7 @@ function main() {
 			});
 
 			proxySocket.on('error', function(err) {
-				socketRequest.write("HTTP/" + httpVersion
-						+ " 500 Connection error\r\n\r\n");
+				socketRequest.write("HTTP/" + httpVersion + " 500 Connection error\r\n\r\n");
 				if (debugging) {
 					console.log('  < ERR: %s', err);
 				}
