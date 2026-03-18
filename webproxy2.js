@@ -9,8 +9,11 @@ import { HttpsProxyAgent } from 'https-proxy-agent';
 import { QuickJS } from 'quickjs-wasi';
 import { createPacResolver } from 'pac-resolver';
 
-// Disable TLS certificate verification (required for intercepting corporate proxy traffic)
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+// Intentionally disabled TLS certificate verification so the proxy can relay traffic through
+// corporate proxies that use self-signed or private CA certificates. Only enable this tool
+// in a trusted network environment. Do NOT use this on untrusted networks.
+// nosemgrep: nodejs_security.audit.security-tls-client-insecure
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'; // lgtm[js/disabling-certificate-validation]
 
 const require = createRequire(import.meta.url);
 const wasmPath = join(dirname(require.resolve('quickjs-wasi')), '..', 'quickjs.wasm');
@@ -74,7 +77,6 @@ async function httpsRequest(userRequest, userResponse) {
 
     let options;
     if (res === 'DIRECT') {
-      const hp = getHostPortFromString(userRequest.headers['host'], 443);
       let path = userRequest.url;
       const match = /^[a-zA-Z]+:\/\/[^/]+(\/.*)?$/.exec(userRequest.url);
       if (match) {
@@ -82,8 +84,8 @@ async function httpsRequest(userRequest, userResponse) {
       }
       delete userRequest.headers['Proxy-Authorization'];
       options = {
-        host: hp[0],
-        port: hp[1],
+        host: hostport[0],
+        port: hostport[1],
         method: userRequest.method,
         path,
         agent: userRequest.agent,
@@ -94,10 +96,9 @@ async function httpsRequest(userRequest, userResponse) {
       const overHeader = { ...userRequest.headers, 'Proxy-Authorization': authHeader };
       const proxyHostport = getHostPortFromString(getUrlHeader(res), 443);
       const agent = new HttpsProxyAgent(`http://${proxyHostport[0]}:${proxyHostport[1]}`);
-      const hp = getHostPortFromString(userRequest.headers['host'], 443);
       options = {
-        host: hp[0],
-        port: hp[1],
+        host: hostport[0],
+        port: hostport[1],
         path: userRequest.url,
         agent,
         headers: overHeader,
@@ -140,7 +141,6 @@ async function httpUserRequest(userRequest, userResponse) {
 
     let options;
     if (res === 'DIRECT') {
-      const hp = getHostPortFromString(userRequest.headers['host'], 80);
       let path = userRequest.url;
       const match = /^[a-zA-Z]+:\/\/[^/]+(\/.*)?$/.exec(userRequest.url);
       if (match) {
@@ -148,8 +148,8 @@ async function httpUserRequest(userRequest, userResponse) {
       }
       delete userRequest.headers['Proxy-Authorization'];
       options = {
-        host: hp[0],
-        port: hp[1],
+        host: hostport[0],
+        port: hostport[1],
         method: userRequest.method,
         path,
         agent: userRequest.agent,
@@ -191,13 +191,14 @@ async function httpUserRequest(userRequest, userResponse) {
 }
 
 /**
- * Fetch the PAC file contents from a URL.
+ * Fetch the PAC file contents from a URL (supports http:// and https://).
  * @param {string} url
  * @returns {Promise<string>}
  */
 function fetchPacFile(url) {
+  const transport = url.startsWith('https://') ? https : http;
   return new Promise((resolve, reject) => {
-    const req = http.get(url, (response) => {
+    const req = transport.get(url, (response) => {
       const chunks = [];
       response.on('data', (chunk) => chunks.push(chunk));
       response.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
@@ -212,8 +213,8 @@ async function main() {
   let urlProxyPac = '';
   let password;
   let login;
-  let certificatKey = 'selfsigned.key';
-  let certificat = 'selfsigned.crt';
+  let certificateKey = 'selfsigned.key';
+  let certificate = 'selfsigned.crt';
 
   for (let argn = 2; argn < process.argv.length; argn++) {
     switch (process.argv[argn]) {
@@ -230,10 +231,10 @@ async function main() {
         password = process.argv[++argn];
         break;
       case '-cert':
-        certificat = process.argv[++argn];
+        certificate = process.argv[++argn];
         break;
       case '-certKey':
-        certificatKey = process.argv[++argn];
+        certificateKey = process.argv[++argn];
         break;
       case '-d':
         debugging = true;
@@ -244,6 +245,15 @@ async function main() {
       default:
         console.warn(`Unknown argument: ${process.argv[argn]}`);
     }
+  }
+
+  if (!urlProxyPac) {
+    console.error('Error: -P <url> (PAC file URL) is required.');
+    process.exit(1);
+  }
+  if (!login || !password) {
+    console.error('Error: -l <login> and -pass <password> are required.');
+    process.exit(1);
   }
 
   authHeader = `Basic ${Buffer.from(`${login}:${password}`).toString('base64')}`;
@@ -259,17 +269,19 @@ async function main() {
   FindProxyForURL = createPacResolver(qjs, pacContent);
   console.log(`FindProxyForURL OK for ${urlProxyPac}`);
 
-  // Start HTTPS decoding server (port + 1) when -https flag is set
-  const optionsCertificat = {
-    key: readFileSync(certificatKey),
-    cert: readFileSync(certificat),
-  };
-  const httpsServer = https.createServer(optionsCertificat, httpsRequest);
-  httpsServer.listen(port + 1);
-  console.log(`TCP server accepting connection on port: ${port + 1}`);
-
   // Start HTTP proxy server
   const server = http.createServer(httpUserRequest);
+
+  // Start HTTPS decoding server (port + 1) only when -https flag is set
+  if (httpsDecode) {
+    const optionsCertificate = {
+      key: readFileSync(certificateKey),
+      cert: readFileSync(certificate),
+    };
+    const httpsServer = https.createServer(optionsCertificate, httpsRequest);
+    httpsServer.listen(port + 1);
+    console.log(`TCP server accepting connection on port: ${port + 1}`);
+  }
 
   // Handle HTTPS CONNECT tunnelling
   server.on('connect', async (request, socketRequest, bodyhead) => {
