@@ -1,0 +1,32 @@
+{
+  "name": "proxy-to-proxy-https",
+  "version": "1.0.0",
+  "description": "An HTTP/HTTPS proxy that acts as man-in-the-middle between a browser and a corporate proxy, with PAC-file routing and optional HTTPS decoding.",
+  "type": "module",
+  "main": "webproxy2.js",
+  "bin": {
+    "proxy-to-proxy-https": "webproxy2.js",
+    "pac-servers": "pacservers.js"
+  },
+  "scripts": {
+    "start": "node webproxy2.js",
+    "start:pac": "node pacservers.js"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "keywords": [
+    "proxy",
+    "https",
+    "pac",
+    "corporate",
+    "http-proxy",
+    "pac-resolver"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "https-proxy-agent": "^7.0.6",
+    "pac-resolver": "^8.0.0",
+    "quickjs-wasi": "^0.0.1"
+  }
+}

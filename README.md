@@ -1,97 +1,110 @@
 # proxy-to-proxy-https
-An http proxy that acts as man in the middle between a browser and a corporate proxy in nodeJS 
 
-Do not hesitate to publish an issue for any question or problem
+An HTTP/HTTPS proxy that acts as man-in-the-middle between a browser and a
+corporate proxy, written in Node.js.
 
-(inspired by https://newspaint.wordpress.com/2012/11/05/node-js-http-and-https-proxy/ )
+Inspired by
+[node-js-http-and-https-proxy](https://newspaint.wordpress.com/2012/11/05/node-js-http-and-https-proxy/).
 
-You will need nodeJS installed with "pac-resolver" and 'https-proxy-agent' npm packaged installed. (beware : pac-resolver has some issue with dns error handling). 
+> Do not hesitate to open an issue for any question or problem.
 
-##usage : 
+---
 
-* -l : login for corporate http proxy authentification
-* -pass : password for corporate http proxy authentification
-* -p : port to listen to
-* -P : url to get the proxy.pac configuration.
-* -https : optional attribute to decode https messages.
-* -cert : certificate chain for https decoding
-* -certKey : key for re encoding message to external proxy or website
+## Requirements
 
+- **Node.js ≥ 22**
 
-
-If you do not have an url to get a script for proxy configuration, you can run pacserver.js. It will run 2 servers : 
-* server at localhost:8083 delivers a script to use an http proxy at localhost:8084. 
-* server at localhost:8082 delivers a script to always bypass a proxy ( DIRECT ) 
-
+## Installation
 
 ```sh
-$ nodejs pacservers.js&
-Server proxy running at 8083
-Server direct running at 8082
+npm install
 ```
 
-
-Here, as an example, I run a first instance of my webproxy2.js in order to target a second http proxy running at localhost:8084.
-You can see in the http request header that there is no information of login/password. These informations are added on the fly before forwarding the request to the second http proxy.
+## Usage
 
 ```sh
-nodejs webproxy2.js -l myLogin -pass myPassword -p 8080  -P http://localhost:8083 -d  -https 
-webproxy server listening on port 8080
-TCP server accepting connection on port: 8080
-FindProxyForURL OK for http://localhost:8083
-TCP server accepting connection on port: 8081
-GET http://www.20minutes.fr/ HTTP/1.1
-
-{
-    "user-agent": "Wget/1.17.1 (linux-gnu)",
-    "accept": "*/*",
-    "accept-encoding": "identity",
-    "host": "www.20minutes.fr",
-    "connection": "Keep-Alive",
-    "proxy-connection": "Keep-Alive"
-}
-HTTP/1.1 200 OK
-
-{
-    "date": "Wed, 26 Oct 2016 21:01:49 GMT",
-    "server": "Apache",
-    "cache-control": "public, max-age=30, s-maxage=30",
-[...]
+node webproxy2.js [options]
 ```
 
+### Options
 
+| Flag        | Description |
+|-------------|-------------|
+| `-l <login>`    | Login for corporate HTTP proxy authentication |
+| `-pass <pass>`  | Password for corporate HTTP proxy authentication |
+| `-p <port>`     | Port to listen on (default: `5555`) |
+| `-P <url>`      | URL to fetch the PAC (proxy auto-config) file from |
+| `-https`        | Enable HTTPS decoding (man-in-the-middle) |
+| `-cert <file>`  | Certificate chain file for HTTPS decoding (default: `selfsigned.crt`) |
+| `-certKey <file>` | Private key file for HTTPS decoding (default: `selfsigned.key`) |
+| `-d`            | Enable debug logging |
 
-Then, I launch a second proxy running at localhost:8084 configured for a direct connection : 
+---
+
+## PAC server helper
+
+If you don't have a PAC URL handy, you can run the included helper which
+starts two lightweight PAC servers:
+
+- **localhost:8082** – always returns `DIRECT`
+- **localhost:8083** – always routes through `PROXY localhost:8084`
 
 ```sh
-$nodejs webproxy2.js -p 8084 -l myLogin -pass myPassword -P http://localhost:8082 -d -https -cert fullchain.pem -certKey key-letsencrypt.pem 
-webproxy server listening on port 8084
-TCP server accepting connection on port: 8084
-FindProxyForURL OK for http://localhost:8082
-TCP server accepting connection on port: 8085
-GET http://www.20minutes.fr/ HTTP/1.1
-
-{
-    "user-agent": "Wget/1.17.1 (linux-gnu)",
-    "accept": "*/*",
-    "accept-encoding": "identity",
-    "host": "www.20minutes.fr",
-    "connection": "Keep-Alive",
-    "proxy-connection": "Keep-Alive",
-    "proxy-authorization": "Basic dW5kZWZpbmVkOnVuZGVmaW5lZA=="
-}
-HTTP/1.1 200 OK
-[...]
+node pacservers.js
+# Server direct running at 8082
+# Server proxy running at 8083
 ```
 
-You can notice that "proxy-authorization" header is now present. Since the connection to the target url is now 'DIRECT', the "proxy-authorization" header is removed before the sending to the endpoint.
+---
 
-###example of client script
+## Example: chained proxies
+
+### First proxy (port 8080) → forwards to upstream proxy at port 8084
 
 ```sh
-export https_proxy=http://localhost:8080
+node webproxy2.js -l myLogin -pass myPassword -p 8080 -P http://localhost:8083 -d -https
+# webproxy server listening on port 8080
+# TCP server accepting connection on port: 8080
+# FindProxyForURL OK for http://localhost:8083
+# TCP server accepting connection on port: 8081
+# GET http://www.example.com/ HTTP/1.1
+#
+# {
+#     "user-agent": "Wget/1.21 (linux-gnu)",
+#     "accept": "*/*",
+#     "host": "www.example.com",
+#     "connection": "Keep-Alive"
+# }
+```
+
+### Second proxy (port 8084) → direct connection
+
+```sh
+node webproxy2.js -p 8084 -l myLogin -pass myPassword \
+  -P http://localhost:8082 -d -https \
+  -cert fullchain.pem -certKey key-letsencrypt.pem
+# webproxy server listening on port 8084
+# TCP server accepting connection on port: 8084
+# FindProxyForURL OK for http://localhost:8082
+# TCP server accepting connection on port: 8085
+```
+
+### Configure your HTTP client
+
+```sh
 export http_proxy=http://localhost:8080
+export https_proxy=http://localhost:8080
 
-wget http://www.20minutes.fr
-wget https://www.leboncoin.fr --no-check-certificate -d
+wget http://www.example.com
+wget https://www.example.com --no-check-certificate
 ```
+
+> **Note:** When the connection is `DIRECT`, the `Proxy-Authorization` header is
+> stripped before forwarding to the endpoint. When routed through an upstream
+> proxy, the header is injected automatically.
+
+---
+
+## License
+
+MIT
