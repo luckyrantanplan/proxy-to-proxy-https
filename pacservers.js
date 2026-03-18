@@ -1,28 +1,25 @@
-var http = require('http');
+#!/usr/bin/env node
+import http from 'node:http';
 
-var directPort=8082;
-var proxyPort=8083;
+const DIRECT_PORT = 8082;
+const PROXY_PORT = 8083;
 
-
-const server = http.createServer((req, res) => {
-	res.statusCode = 200;
-	res.setHeader('Content-Type', 'text/plain');
-	res.end('function FindProxyForURL(url, host) {return "DIRECT"; }\n');
+const serverDirect = http.createServer((req, res) => {
+  res.statusCode = 200;
+  res.setHeader('Content-Type', 'text/plain');
+  res.end('function FindProxyForURL(url, host) {return "DIRECT"; }\n');
 });
 
-server.listen(directPort, 'localhost', () => {
-	console.log('Server direct running at '+directPort);
+serverDirect.listen(DIRECT_PORT, 'localhost', () => {
+  console.log(`Server direct running at ${DIRECT_PORT}`);
 });
-
 
 const serverProxy = http.createServer((req, res) => {
-	res.statusCode = 200;
-	res.setHeader('Content-Type', 'text/plain');
-	res.end('function FindProxyForURL(url, host) {return "PROXY localhost:8084";}\n');
+  res.statusCode = 200;
+  res.setHeader('Content-Type', 'text/plain');
+  res.end('function FindProxyForURL(url, host) {return "PROXY localhost:8084";}\n');
 });
 
-serverProxy.listen(proxyPort, 'localhost', () => {
-	console.log('Server proxy running at '+proxyPort);
+serverProxy.listen(PROXY_PORT, 'localhost', () => {
+  console.log(`Server proxy running at ${PROXY_PORT}`);
 });
-
- 
